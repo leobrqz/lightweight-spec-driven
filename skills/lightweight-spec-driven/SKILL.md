@@ -10,18 +10,24 @@ Replace placeholders in generated files with the repo's real name and stack.
 
 This skill sets up a lightweight spec-driven workflow for coding agents. It creates a minimal `tasks/` folder structure for tracking work, an `INDEX.md` that acts as the task contract agents read before doing anything, an agents guide that encodes conduct and sources of truth, and an `ARCHITECTURE.md` that grounds agents in the real shape of the codebase. The goal is structured enough to keep agents aligned across sessions, small enough to never bloat the repo or the context window.
 
-Execute **in order**. Do not skip AskQuestion steps unless the user has already answered the same questions in this session (then reuse their answers).
+Execute **phase by phase**. Each phase ends by writing its artifact. **Do not ask questions from the next phase until the current phase's artifact is written and complete.**
+
+Do not skip AskQuestion steps unless the user has already answered the same questions in this session (then reuse their answers).
+
+When calling **`AskQuestion`**, do not add an "Other" option — the tool already provides one natively.
 
 ---
 
-## Step 1 — Confirm repo root
+## Phase 1 — Tasks
+
+Collect all task-related decisions, create the folder tree, and write `tasks/INDEX.md`. Do not move to Phase 2 until `tasks/INDEX.md` exists on disk.
+
+### Step 1 — Confirm repo root
 
 - Use the workspace / project root the user intends to set up (usually the git root).
 - If ambiguous, ask once in plain text which folder is the root before continuing.
 
----
-
-## Step 2 — AskQuestion: changelog date in filename
+### Step 2 — AskQuestion: changelog date in filename
 
 Use **`AskQuestion`** so the user picks how **root** changelog files (before archive) encode the calendar day in the basename:
 
@@ -33,9 +39,7 @@ Use **`AskQuestion`** so the user picks how **root** changelog files (before arc
 
 **Store** the choice as `CHANGELOG_DATE_ORDER`. All later templates and `tasks/INDEX.md` must describe **only** this convention (archived files keep the same basename pattern when moved under `tasks/<changelog-folder>/{mon}/` — use **`TASK_CHANGELOGS`** from Step 3 when writing those paths).
 
----
-
-## Step 3 — AskQuestion: task folder and filename-prefix names
+### Step 3 — AskQuestion: task folder and filename-prefix names
 
 **Suggested folder names** (under `tasks/`): **`backlog/`** (queued, not started), **`active/`** (in progress), **`closed/`** (finished specs), **`changelogs/`** (ship notes; root active file + `{mon}/` archives per Step 2).
 
@@ -43,11 +47,9 @@ Use **`AskQuestion`** so the user picks how **root** changelog files (before arc
 
 Use **`AskQuestion`** so the user either **accepts these suggested folder and prefix names** or **chooses to replace** them (then wait for their next message listing the final folder names and prefix strings for each role; map roles clearly: queue, in-progress, done, changelogs root + archive).
 
-**Store** the resolved folder names as `TASK_BACKLOG`, `TASK_ACTIVE`, `TASK_CLOSED`, `TASK_CHANGELOGS` (must be single path segment each, no slashes). **Store** prefixes as `PREFIX_IDEA`, `PREFIX_DESIGN`, `PREFIX_PLAN`, `PREFIX_ISSUE` (include trailing `_` if the team uses that style). Use these values in Steps 5 and 6 and in **`AGENTS_FILE`** (Step 11).
+**Store** the resolved folder names as `TASK_BACKLOG`, `TASK_ACTIVE`, `TASK_CLOSED`, `TASK_CHANGELOGS` (must be single path segment each, no slashes). **Store** prefixes as `PREFIX_IDEA`, `PREFIX_DESIGN`, `PREFIX_PLAN`, `PREFIX_ISSUE` (include trailing `_` if the team uses that style). Use these values in Steps 5 and 6 and in **`AGENTS_FILE`** (Phase 2).
 
----
-
-## Step 4 — AskQuestion: status definitions
+### Step 4 — AskQuestion: status definitions
 
 Use **`AskQuestion`** to confirm the **status values** used in all prefixed task documents. Present the following definitions and ask whether to **accept** or **replace** any:
 
@@ -62,9 +64,7 @@ Use **`AskQuestion`** to confirm the **status values** used in all prefixed task
 
 **Store** the confirmed set (labels and meanings) as `STATUS_DEFINITIONS`. Use them verbatim in `tasks/INDEX.md` (Step 6).
 
----
-
-## Step 5 — Create `tasks/` tree
+### Step 5 — Create `tasks/` tree
 
 Under the repo root, create the four workflow folders using **Step 3** names (`tasks/{TASK_BACKLOG}/`, etc.).
 
@@ -75,16 +75,11 @@ tasks/
 ├── {TASK_CLOSED}/
 └── {TASK_CHANGELOGS}/
 ```
-
-Use **`.gitkeep`** in each empty leaf folder if git does not track empty dirs.
-
----
-
-## Step 6 — Write `tasks/INDEX.md`
+### Step 6 — Write `tasks/INDEX.md`
 
 Write `tasks/INDEX.md` as the **contract for coding agents**: it must explain **what each folder is for**, **what each prefix means**, and **how work flows**, using the **exact folder and prefix names from Step 3** and the **status definitions from Step 4**.
 
-### Required content
+#### Required content
 
 1. **## Folders** — A table **Folder | Purpose** using the resolved names. Each purpose row must be explicit, for example (adapt wording, not names, to the repo):
    - **Queue folder** (`TASK_BACKLOG`): work not started; ideas, designs, issues, or plans waiting for triage or scheduling.
@@ -104,13 +99,19 @@ Write `tasks/INDEX.md` as the **contract for coding agents**: it must explain **
 
 5. **## Changelogs** — State the date format (`CHANGELOG_DATE_ORDER` from Step 2) **explicitly by name and example** so tools reading this file can extract it. Then cover: root vs `{mon}/`, required top-of-file heading style, content rules, and the template for a new root changelog file.
 
-6. Do **not** invent product domains or vendors; stack references only when they already appear in repo docs or will appear in `ARCHITECTURE.md` / Step 9 integrations.
+6. Do **not** invent product domains or vendors; stack references only when they already appear in repo docs or will appear in `ARCHITECTURE.md` / Phase 2 integrations.
+
+**`tasks/INDEX.md` must be written to disk before continuing to Phase 2.**
 
 ---
 
-## Step 7 — AskQuestion: agents guide filename (basename only)
+## Phase 2 — Agents
 
-Use **`AskQuestion`** with at least two options plus an escape hatch, for example:
+Collect all agent-related decisions and write `AGENTS_FILE`. Do not move to Phase 3 until `AGENTS_FILE` exists on disk.
+
+### Step 7 — AskQuestion: agents guide filename (basename only)
+
+Use **`AskQuestion`** with at least two options, for example:
 
 | Option | Typical use |
 |--------|----------------|
@@ -120,9 +121,7 @@ Use **`AskQuestion`** with at least two options plus an escape hatch, for exampl
 
 **Store the chosen value** as `AGENTS_FILE` (e.g. `AGENTS.md`). If the user provides a different filename, use that as `AGENTS_FILE` before continuing.
 
----
-
-## Step 8 — AskQuestion: how the AI should behave (conduct)
+### Step 8 — AskQuestion: how the AI should behave (conduct)
 
 Use **`AskQuestion`** (single choice) so the user picks the **default conduct** block that will be copied into **`AGENTS_FILE`** in Step 11. **Three options:**
 
@@ -136,9 +135,7 @@ Use **`AskQuestion`** (single choice) so the user picks the **default conduct** 
 
 When writing **`AGENTS_FILE`** in Step 11, paste the matching **Conduct template** from [Conduct templates](#conduct-templates) below (swap `[ARCH]` for the literal `ARCHITECTURE.md`).
 
----
-
-## Step 9 — Discover MCPs and skills (read-only)
+### Step 9 — Discover MCPs and skills (read-only)
 
 **Search both the environment and the repo** without modifying anything:
 
@@ -148,9 +145,7 @@ When writing **`AGENTS_FILE`** in Step 11, paste the matching **Conduct template
 
 **Summarize in one short paragraph** what exists across both sources (or "none found" for each category). You will inject this summary into Step 10.
 
----
-
-## Step 10 — AskQuestion: include MCPs / skills in the agents guide?
+### Step 10 — AskQuestion: include MCPs / skills in the agents guide?
 
 Use **`AskQuestion`** with the **summary from Step 9** embedded in the `prompt` (so the user sees what was found). Example options:
 
@@ -163,14 +158,12 @@ Use **`AskQuestion`** with the **summary from Step 9** embedded in the `prompt` 
 
 **Store** as `INTEGRATIONS_MODE`.
 
----
-
-## Step 11 — Write the agents guide (`AGENTS_FILE`)
+### Step 11 — Write the agents guide (`AGENTS_FILE`)
 
 Create **`AGENTS_FILE`** (from Step 7) with:
 
 1. **Conduct** — Insert the block matching **`CONDUCT_PRESET`** from [Conduct templates](#conduct-templates) (first section of the file; title e.g. "Agent conduct" or "Engineering standards").
-2. **Sources of truth (read order)** — Primary product doc if present (`README.md`, `docs/product.md`, etc.). Then `ARCHITECTURE.md` (**for coding agents: layout, patterns, methodology, boundaries** — file is written in **Step 12** of this run), `tasks/INDEX.md`, then one line per **resolved task folder** from Step 3 (`tasks/{TASK_BACKLOG}/`, `tasks/{TASK_ACTIVE}/`, …), then `tasks/{TASK_CHANGELOGS}/`, then optional skills/MCPs **only if** `INTEGRATIONS_MODE` requires it.
+2. **Sources of truth (read order)** — Primary product doc if present (`README.md`, `docs/product.md`, etc.). Then `ARCHITECTURE.md` (**for coding agents: layout, patterns, methodology, boundaries** — file is written in Phase 3 of this run), `tasks/INDEX.md`, then one line per **resolved task folder** from Step 3 (`tasks/{TASK_BACKLOG}/`, `tasks/{TASK_ACTIVE}/`, …), then `tasks/{TASK_CHANGELOGS}/`, then optional skills/MCPs **only if** `INTEGRATIONS_MODE` requires it.
 3. **Spec-driven workflow** — Table or bullets aligned with **`tasks/INDEX.md`** (use real folder names). Point agents at prefix meanings and required task headers in the index.
 4. **Definition of done** — Short checklist grounded in this workflow.
 5. **Integrations appendix** (conditional):
@@ -180,17 +173,21 @@ Create **`AGENTS_FILE`** (from Step 7) with:
 
 Use relative paths from repo root only.
 
+**`AGENTS_FILE` must be written to disk before continuing to Phase 3.**
+
 ---
 
-## Step 12 — Survey the repo, draft architecture read, confirm, then write `ARCHITECTURE.md`
+## Phase 3 — Architecture
+
+Survey the repo, confirm findings, and write `ARCHITECTURE.md`. Do not move to the Wrap-up until `ARCHITECTURE.md` exists on disk.
 
 Primary audience for **`ARCHITECTURE.md`** is **coding agents** (read via **`AGENTS_FILE`** and session skills). Humans benefit too, but write so an **AI** can infer **patterns, methodology signals, and boundaries** before editing code—not only a folder tree.
 
-### 12a — Read-only survey
+### Step 12a — Read-only survey
 
 Scan roots, manifests, source trees, entrypoints, CI, data/config if present. Note **recurring patterns** (feature folders, `internal/` vs `pkg/`, shared UI vs domain modules, test layout). If the repo is nearly empty, say **greenfield** in notes—do not invent frameworks.
 
-### 12b — What `ARCHITECTURE.md` must contain
+### Step 12b — What `ARCHITECTURE.md` must contain
 
 Use these headings or clear equivalents when writing the file:
 
@@ -207,29 +204,33 @@ Use these headings or clear equivalents when writing the file:
 
 Tone: factual, concise, **evidence-first**.
 
-### 12c — Draft interpretation (present in chat, not the file yet)
+### Step 12c — Present draft interpretation in chat
 
-From 12a and the required sections in 12b, write a **short bullet list in chat** covering: (1) layout highlights, (2) **inferred patterns** (import rules, layering, slice boundaries) with **path evidence**, (3) **methodology / architectural style** hypotheses (e.g. vertical slices, hexagonal cues, CRUD services) labeled **Hypothesis** when not certain, (4) risks or unknowns.
+Send a **chat message** with the findings. This is a **standalone action** — do not combine it with any tool call, including AskQuestion. Cover: (1) layout highlights, (2) **inferred patterns** with **path evidence**, (3) **methodology / architectural style** hypotheses labeled **Hypothesis** when not certain, (4) risks or unknowns.
 
-Present this as a normal chat message. Do **not** embed it inside the AskQuestion prompt.
+Only after the chat message is sent, proceed to Step 12d.
 
-### 12d — AskQuestion: confirm architecture read
+### Step 12d — AskQuestion: confirm architecture read
 
-After presenting the bullet list in chat, call **`AskQuestion`** with a short prompt (e.g. "Does this architecture read look accurate?"). Options:
+Call **`AskQuestion`** as a **separate action** from Step 12c. The `prompt` field must contain only a short confirmation question — exactly like: `"Does this architecture read look accurate?"` No findings, bullets, paths, or survey content belong in the prompt. Options:
 
 | Option | What happens next |
 |--------|-------------------|
-| **Accurate** | Write `ARCHITECTURE.md` from 12a–12c; remove **Hypothesis** labels where the user implicitly confirmed by choosing Accurate. |
+| **Accurate** | Write `ARCHITECTURE.md` from 12a–12c; remove **Hypothesis** labels. |
 | **I will correct** | Wait for the user's correction message; merge fixes; then write `ARCHITECTURE.md`. |
 | **Greenfield / minimal** | Write a short `ARCHITECTURE.md` per Step 12e only. |
 
-### 12e — Greenfield or sparse repos
+### Step 12e — Greenfield or sparse repos
 
 If almost nothing is present after 12d **Greenfield / minimal**: short file listing what was scanned, what is unknown, and a checklist to expand after code exists—**no** fabricated stack.
 
+**`ARCHITECTURE.md` must be written to disk before continuing to Wrap-up.**
+
 ---
 
-## Step 13 — Verify cross-references
+## Wrap-up
+
+### Step 13 — Verify cross-references
 
 With all three artifacts written, check each file's references are accurate:
 
@@ -238,9 +239,7 @@ With all three artifacts written, check each file's references are accurate:
 
 Update any file where a reference is missing, misspelled, or still a placeholder.
 
----
-
-## Step 14 — Report
+### Step 14 — Report
 
 Reply with:
 
@@ -306,7 +305,7 @@ Paste **one** block into **`AGENTS_FILE`** under a "read first" heading. Replace
 ## Notes
 
 - **Do not** overwrite existing files without **explicit user confirmation** if `tasks/INDEX.md`, `ARCHITECTURE.md`, or `AGENTS_FILE` already exist—offer diff or append-only, or ask once.
-- `ARCHITECTURE.md` must stay **grounded in the Step 12a survey** and **Step 12d**; `tasks/INDEX.md` is agent-facing process and must not invent domains beyond what `ARCHITECTURE.md` or Step 9 integrations support.
+- `ARCHITECTURE.md` must stay **grounded in the Step 12a survey** and **Step 12d**; `tasks/INDEX.md` is agent-facing process and must not invent domains beyond what `ARCHITECTURE.md` or Phase 2 integrations support.
 - If **`AskQuestion`** is unavailable, ask the same choices in **numbered plain text** and wait for the user's reply before Steps 5–6 and 11–12.
 
 ## Templates
