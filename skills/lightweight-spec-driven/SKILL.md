@@ -115,7 +115,7 @@ Use **`AskQuestion`** with at least two options, for example:
 
 | Option | Typical use |
 |--------|----------------|
-| `AGENTS.md` | Cursor / generic "agents" doc at repo root |
+| `AGENTS.md` | Generic agents guide at repo root |
 | `CLAUDE.md` | Claude Code / Anthropic-style agent doc |
 | `AGENT.md` | Short single-file variant |
 
@@ -140,8 +140,8 @@ When writing **`AGENTS_FILE`** in Step 11, paste the matching **Conduct template
 **Search both the environment and the repo** without modifying anything:
 
 1. **Environment MCPs**: Check what MCP servers are currently active in the session — these may be configured at the IDE, workspace, or user level and will not appear inside the repo. List every MCP server available, regardless of where it is configured.
-2. **Repo MCPs**: Also check inside the repo for local MCP config (e.g. `mcps/` descriptor JSON, `.cursor/mcp.json`, or any MCP config the repo documents).
-3. **Skills**: Check both the environment (e.g. IDE-installed skills, user-level skill dirs) and the repo (e.g. `.agents/skills/`, `.cursor/skills/`, project rules dirs). List **directory names** or `SKILL.md` paths found.
+2. **Repo MCPs**: Also check inside the repo for local MCP config (e.g. `mcps/` descriptor JSON, workspace `mcp.json`, or any MCP config the repo documents).
+3. **Skills**: Check both the environment (e.g. IDE-installed skills, user-level skill dirs) and the repo (e.g. `.agents/skills/`, editor-managed skill directories, project rules dirs). List **directory names** or `SKILL.md` paths found.
 
 **Summarize in one short paragraph** what exists across both sources (or "none found" for each category). You will inject this summary into Step 10.
 
@@ -181,20 +181,29 @@ Use relative paths from repo root only.
 
 Survey the repo, confirm findings, and write `ARCHITECTURE.md`. Do not move to the Wrap-up until `ARCHITECTURE.md` exists on disk.
 
+**Chat vs Questions for architecture:** Step **14** is the **full** draft read—layout, path-backed patterns, **Hypothesis** where needed, risks and unknowns—in **main chat** (no tools in that response). Step **15** is a **dedicated** **`AskQuestion`** for this phase only: its `prompt` carries a **short bullet recap** of what Step 14 concluded **plus** a one-line confirmation ask. That recap belongs in **`AskQuestion`**; the long narrative does not.
+
+**What to avoid**
+
+1. **Mega-prompt** — Do **not** paste the entire Step 14 survey (long prose, full hypothesis blocks, exhaustive paths) into the Step 15 `prompt`. Keep Step 15 to a **tight** bullet list (on the order of a handful of bullets) and a single closing confirmation sentence.
+2. **Unrelated bundling** — Do **not** combine the Step **15** architecture confirmation with **`AskQuestion`** calls for other phases (tasks, agents guide, integrations, etc.). Finish those earlier; run **Step 15** only when ready to confirm the architecture read.
+
+**Same response as Step 14 = invalid:** Do **not** emit Step **14** chat body and **any** **`AskQuestion`** (including Step 15) in one assistant response—hosts may merge them with the Questions UI. **Step 14** first (chat, no tools), then **Step 15** in a **following** response (**`AskQuestion`** for architecture confirmation only).
+
 Primary audience for **`ARCHITECTURE.md`** is **coding agents** (read via **`AGENTS_FILE`** and session skills). Humans benefit too, but write so an **AI** can infer **patterns, methodology signals, and boundaries** before editing code—not only a folder tree.
 
-### Step 12a — Read-only survey
+### Step 12 — Read-only survey
 
 Scan roots, manifests, source trees, entrypoints, CI, data/config if present. Note **recurring patterns** (feature folders, `internal/` vs `pkg/`, shared UI vs domain modules, test layout). If the repo is nearly empty, say **greenfield** in notes—do not invent frameworks.
 
-### Step 12b — What `ARCHITECTURE.md` must contain
+### Step 13 — What `ARCHITECTURE.md` must contain
 
 Use these headings or clear equivalents when writing the file:
 
 1. **Purpose** — Evidence-based; unknowns named explicitly.
-2. **Repository layout** — Real paths from 12a; no fake subtrees.
+2. **Repository layout** — Real paths from Step 12; no fake subtrees.
 3. **Patterns and implementation conventions** — What repeats in code (exports, error handling, config loading, naming), each tied to **file or directory paths**.
-4. **Architectural style and methodology** — How the repo structures work (layers, modules, services, domain packages). Keep claims tied to evidence; keep **Hypothesis** until Step 12d removes it.
+4. **Architectural style and methodology** — How the repo structures work (layers, modules, services, domain packages). Keep claims tied to evidence; keep **Hypothesis** until Step 15 removes it.
 5. **Stack** — From manifests; **Unknown** + how to verify when missing.
 6. **Runtime and entrypoints** — Build / run / test commands found; say if none.
 7. **Data and external systems** — Only if evidenced; else **None identified**.
@@ -204,25 +213,47 @@ Use these headings or clear equivalents when writing the file:
 
 Tone: factual, concise, **evidence-first**.
 
-### Step 12c — Present draft interpretation in chat
+### Step 14 — Present draft interpretation in chat
 
-Send a **chat message** with the findings. This is a **standalone action** — do not combine it with any tool call, including AskQuestion. Cover: (1) layout highlights, (2) **inferred patterns** with **path evidence**, (3) **methodology / architectural style** hypotheses labeled **Hypothesis** when not certain, (4) risks or unknowns.
+Deliver the full architecture **draft read** as a **normal assistant reply in the main chat** (the same stream as the rest of the conversation).
 
-Only after the chat message is sent, proceed to Step 12d.
+**Hard rules for this step**
 
-### Step 12d — AskQuestion: confirm architecture read
+1. **No tools in the same response as Step 14** — the assistant response that delivers Step 14 must not invoke **any** tools (including **`AskQuestion`**, search, file read, or shell). Complete Step 12 survey **before** Step 14; Step 14 is **publish-only** in chat.
+2. **Full narrative stays in chat** — the long draft (survey prose, detailed **Hypothesis** sections, full unknowns discussion) lives **here**, not inside a later **`AskQuestion`** `prompt`. Step **15**'s **`AskQuestion`** `prompt` carries only the **short** bullet recap—not this full narrative.
+3. **Do not pair Step 14 with `AskQuestion` in one response** — end Step 14 with **zero** tool calls; run Step **15** in a **new** assistant response.
 
-Call **`AskQuestion`** as a **separate action** from Step 12c. The `prompt` field must contain only a short confirmation question — exactly like: `"Does this architecture read look accurate?"` No findings, bullets, paths, or survey content belong in the prompt. Options:
+Cover in chat: (1) layout highlights, (2) **inferred patterns** with **path evidence**, (3) **methodology / architectural style** hypotheses labeled **Hypothesis** when not certain, (4) risks or unknowns.
+
+**Order:** Emit Step 14 as a **complete** chat-only response and **stop** (no tools). In the **next** assistant response, run Step **15** only (architecture confirmation — no other `AskQuestion` topics).
+
+### Step 15 — AskQuestion: confirm architecture read
+
+**Own response, architecture-only:** Run only **after** Step 14 has fully ended, in a **new** assistant response. This **`AskQuestion`** must **only** confirm the architecture read for **`ARCHITECTURE.md`** — do **not** bundle it with questions from Phase 1, Phase 2, or unrelated setup.
+
+**`prompt` contents (intended shape)**
+
+1. A **compact bullet list** distilled from Step 14 (roughly a handful of bullets): top layout facts, main patterns, headline **Hypothesis** / unknowns—**tight** phrasing, not a copy-paste of the whole Step 14 message.
+2. One **closing confirmation** sentence, for example: `Does this architecture read look accurate?` (locale equivalents allowed.)
+
+**Forbidden in `prompt`**
+
+- Replacing Step 14 with a **mega-prompt** (full survey prose, long multi-section narrative, exhaustive path dumps, or entire hypothesis write-ups).
+- Any **non-architecture** question mixed into the same **`AskQuestion`**.
+
+Optional assistant body outside the tool: at most **one** neutral line (e.g. “Confirm below.”); do **not** re-deliver the full Step 14 narrative in the chat body of the Step 15 response.
+
+Options:
 
 | Option | What happens next |
 |--------|-------------------|
-| **Accurate** | Write `ARCHITECTURE.md` from 12a–12c; remove **Hypothesis** labels. |
+| **Accurate** | Write `ARCHITECTURE.md` from Steps 12–14; remove **Hypothesis** labels. |
 | **I will correct** | Wait for the user's correction message; merge fixes; then write `ARCHITECTURE.md`. |
-| **Greenfield / minimal** | Write a short `ARCHITECTURE.md` per Step 12e only. |
+| **Greenfield / minimal** | Write a short `ARCHITECTURE.md` per Step 16 only. |
 
-### Step 12e — Greenfield or sparse repos
+### Step 16 — Greenfield or sparse repos
 
-If almost nothing is present after 12d **Greenfield / minimal**: short file listing what was scanned, what is unknown, and a checklist to expand after code exists—**no** fabricated stack.
+If almost nothing is present after Step 15 **Greenfield / minimal**: short file listing what was scanned, what is unknown, and a checklist to expand after code exists—**no** fabricated stack.
 
 **`ARCHITECTURE.md` must be written to disk before continuing to Wrap-up.**
 
@@ -230,7 +261,7 @@ If almost nothing is present after 12d **Greenfield / minimal**: short file list
 
 ## Wrap-up
 
-### Step 13 — Verify cross-references
+### Step 17 — Verify cross-references
 
 With all three artifacts written, check each file's references are accurate:
 
@@ -239,12 +270,12 @@ With all three artifacts written, check each file's references are accurate:
 
 Update any file where a reference is missing, misspelled, or still a placeholder.
 
-### Step 14 — Report
+### Step 18 — Report
 
 Reply with:
 
 - Paths created or updated
-- Values chosen: `AGENTS_FILE`, `CONDUCT_PRESET`, `CHANGELOG_DATE_ORDER`, task folder + prefix names from Step 3, `INTEGRATIONS_MODE`, and outcome of Step 12d (Accurate / corrected / greenfield)
+- Values chosen: `AGENTS_FILE`, `CONDUCT_PRESET`, `CHANGELOG_DATE_ORDER`, task folder + prefix names from Step 3, `INTEGRATIONS_MODE`, and outcome of Step 15 (Accurate / corrected / greenfield)
 - One line: next actions for the team (extend `ARCHITECTURE.md` after structural change, add product doc if missing, first spec under `tasks/{TASK_BACKLOG}/`)
 
 ---
@@ -305,8 +336,9 @@ Paste **one** block into **`AGENTS_FILE`** under a "read first" heading. Replace
 ## Notes
 
 - **Do not** overwrite existing files without **explicit user confirmation** if `tasks/INDEX.md`, `ARCHITECTURE.md`, or `AGENTS_FILE` already exist—offer diff or append-only, or ask once.
-- `ARCHITECTURE.md` must stay **grounded in the Step 12a survey** and **Step 12d**; `tasks/INDEX.md` is agent-facing process and must not invent domains beyond what `ARCHITECTURE.md` or Phase 2 integrations support.
-- If **`AskQuestion`** is unavailable, ask the same choices in **numbered plain text** and wait for the user's reply before Steps 5–6 and 11–12.
+- `ARCHITECTURE.md` must stay **grounded in the Step 12 survey** and **Step 15**; `tasks/INDEX.md` is agent-facing process and must not invent domains beyond what `ARCHITECTURE.md` or Phase 2 integrations support.
+- If **`AskQuestion`** is unavailable, ask the same choices in **numbered plain text** and wait for the user's reply before Steps 5–6, 11–12, and 15.
+- **Steps 14 / 15:** Full narrative in **Step 14** chat (**no** tools). **Step 15** = **`AskQuestion`** only, **not** same response as Step 14; `prompt` = **short bullets** from Step 14 + one confirmation line—**not** a mega-prompt, **not** bundled with unrelated phase questions (see Phase 3 intro).
 
 ## Templates
 
