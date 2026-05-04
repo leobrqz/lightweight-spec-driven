@@ -2,6 +2,10 @@
 
 <p align="center">Spec-driven development for coding agents: structured enough to keep them aligned across sessions, minimal enough to never bloat your repo. Stack-agnostic.</p>
 
+<p align="center">
+  <img src="https://img.shields.io/badge/Preview-BETA-6366f1?style=for-the-badge" alt="Beta — preview release" />
+</p>
+
 ## What is spec-driven development
 
 Spec-driven development is a workflow where work is defined in structured documents before and during implementation. Agents read specs to understand what to build, track progress, and stay consistent across sessions. It keeps context between the human and the agent grounded in written artifacts rather than conversation history.
