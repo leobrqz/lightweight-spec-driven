@@ -10,7 +10,7 @@ Spec-driven development is a workflow where work is defined in structured docume
 
 Most spec-driven setups solve the alignment problem by adding more files. More designs, more plans, more architecture notes. Over time the repository accumulates tens of markdown files that either bloat the agent's context window on every session or get ignored entirely. Long-term maintenance becomes a problem in itself.
 
-This lightweight version is designed to be applied to new or existing projects without friction. It creates the minimum structure needed: a `tasks/` folder for tracking work, one index file that agents read as the task contract, one agents guide for conduct and sources of truth, and one architecture file grounded in the actual repo. Nothing more. The suggested workflow is intentionally basic and can be customized during the bootstrap phase — it does not lock you into anything.
+This lightweight version is designed to be applied to new or existing projects without friction. It creates the minimum structure needed: a `tasks/` folder for tracking work, one index file that agents read as the task contract, one agents guide for conduct and sources of truth, and one architecture file grounded in the actual repo. Nothing more. The suggested workflow is intentionally basic and can be customized during the bootstrap phase. It does not lock you into anything.
 
 ## Skills
 
@@ -24,13 +24,14 @@ This lightweight version is designed to be applied to new or existing projects w
 Install everything under `skills/`:
 
 ```bash
-npx skills add leobrqz/lightweight-spec-driven
+npx skills add leobrqz/lightweight-spec-driven --skill familiarize --skill lightweight-spec-driven
 ```
 
-Or pick skills by id (folder / `name` in `SKILL.md`):
+
+Or pick skills during installation:
 
 ```bash
-npx skills add leobrqz/lightweight-spec-driven --skill familiarize --skill lightweight-spec-driven
+npx skills add leobrqz/lightweight-spec-driven
 ```
 
 ## Usage
