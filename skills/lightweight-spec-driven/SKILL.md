@@ -30,7 +30,6 @@ Use **`AskQuestion`** so the user picks how **root** changelog files (before arc
 | **DDMM** | `CHANGELOG_0305.md` | Day then month (Europe-style) |
 | **MMDD** | `CHANGELOG_0503.md` | Month then day (US-style) |
 | **ISO** | `CHANGELOG_2026-05-03.md` | `YYYY-MM-DD` |
-| **Other** | User describes in chat | Map to a clear rule in `tasks/INDEX.md` |
 
 **Store** the choice as `CHANGELOG_DATE_ORDER`. All later templates and `tasks/INDEX.md` must describe **only** this convention (archived files keep the same basename pattern when moved under `tasks/<changelog-folder>/{mon}/` — use **`TASK_CHANGELOGS`** from Step 3 when writing those paths).
 
@@ -118,9 +117,8 @@ Use **`AskQuestion`** with at least two options plus an escape hatch, for exampl
 | `AGENTS.md` | Cursor / generic "agents" doc at repo root |
 | `CLAUDE.md` | Claude Code / Anthropic-style agent doc |
 | `AGENT.md` | Short single-file variant |
-| `Other` | User will give the exact filename in the **next** message (no dotfiles unless they ask) |
 
-**Store the chosen value** as `AGENTS_FILE` (e.g. `AGENTS.md`). If **Other**, stop after AskQuestion and wait for the filename, then set `AGENTS_FILE` from that message before continuing.
+**Store the chosen value** as `AGENTS_FILE` (e.g. `AGENTS.md`). If the user provides a different filename, use that as `AGENTS_FILE` before continuing.
 
 ---
 
@@ -142,12 +140,13 @@ When writing **`AGENTS_FILE`** in Step 11, paste the matching **Conduct template
 
 ## Step 9 — Discover MCPs and skills (read-only)
 
-**Search** the repo and its common config locations without modifying anything:
+**Search both the environment and the repo** without modifying anything:
 
-1. **MCP**: e.g. workspace `mcps/` (descriptor JSON per server), `.cursor/mcp.json`, or MCP config the repo documents.
-2. **Skills**: e.g. `.agents/skills/`, `.cursor/skills/`, project rules dirs—list **directory names** or `SKILL.md` paths found.
+1. **Environment MCPs**: Check what MCP servers are currently active in the session — these may be configured at the IDE, workspace, or user level and will not appear inside the repo. List every MCP server available, regardless of where it is configured.
+2. **Repo MCPs**: Also check inside the repo for local MCP config (e.g. `mcps/` descriptor JSON, `.cursor/mcp.json`, or any MCP config the repo documents).
+3. **Skills**: Check both the environment (e.g. IDE-installed skills, user-level skill dirs) and the repo (e.g. `.agents/skills/`, `.cursor/skills/`, project rules dirs). List **directory names** or `SKILL.md` paths found.
 
-**Summarize in one short paragraph** what exists (or "none found" for each category). You will inject this summary into Step 10.
+**Summarize in one short paragraph** what exists across both sources (or "none found" for each category). You will inject this summary into Step 10.
 
 ---
 
@@ -161,7 +160,6 @@ Use **`AskQuestion`** with the **summary from Step 9** embedded in the `prompt` 
 | **MCPs only** | Section: which MCP servers, where descriptors live, rule to read schema before tool calls |
 | **Skills only** | Section: installed skills paths, table name + when to use each |
 | **Both** | Both sections |
-| **Other** | User explains in the next message; follow their instructions literally |
 
 **Store** as `INTEGRATIONS_MODE`.
 
@@ -179,7 +177,6 @@ Create **`AGENTS_FILE`** (from Step 7) with:
    - If **MCPs only** or **Both**: bullet list from Step 9 + rule "read tool schema before call".
    - If **Skills only** or **Both**: table **Skill | When to use** from discovered `SKILL.md` entries.
    - If **Neither**: omit entirely.
-   - If **Other**: follow the user's follow-up message.
 
 Use relative paths from repo root only.
 
@@ -210,13 +207,15 @@ Use these headings or clear equivalents when writing the file:
 
 Tone: factual, concise, **evidence-first**.
 
-### 12c — Draft interpretation (for confirmation, not the file yet)
+### 12c — Draft interpretation (present in chat, not the file yet)
 
-From 12a and the required sections in 12b, prepare a **short bullet list** to show the user: (1) layout highlights, (2) **inferred patterns** (import rules, layering, slice boundaries) with **path evidence**, (3) **methodology / architectural style** hypotheses (e.g. vertical slices, hexagonal cues, CRUD services) labeled **Hypothesis** when not certain, (4) risks or unknowns.
+From 12a and the required sections in 12b, write a **short bullet list in chat** covering: (1) layout highlights, (2) **inferred patterns** (import rules, layering, slice boundaries) with **path evidence**, (3) **methodology / architectural style** hypotheses (e.g. vertical slices, hexagonal cues, CRUD services) labeled **Hypothesis** when not certain, (4) risks or unknowns.
+
+Present this as a normal chat message. Do **not** embed it inside the AskQuestion prompt.
 
 ### 12d — AskQuestion: confirm architecture read
 
-Use **`AskQuestion`** with those bullets in the prompt. Options, for example:
+After presenting the bullet list in chat, call **`AskQuestion`** with a short prompt (e.g. "Does this architecture read look accurate?"). Options:
 
 | Option | What happens next |
 |--------|-------------------|
