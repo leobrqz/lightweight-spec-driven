@@ -1,6 +1,6 @@
 ---
 name: familiarize
-description: Reads AGENTS.md, ARCHITECTURE.md, tasks/index.md, and tasks/changelogs (root CHANGELOG for today or newest, then latest under {mon}); creates a root changelog for today if none exists per tasks/index.md; summarizes what was read. Use when the user says familiarize, starts work needing norms and changelogs, or asks for project context before coding.
+description: Reads tasks/INDEX.md, the agents guide, and ARCHITECTURE.md; reads the active root changelog and most recent archived changelog; creates a root changelog for today if none exists, using the date format recorded in tasks/INDEX.md. Use when the user says familiarize, starts work needing norms and changelogs, or asks for project context before coding.
 ---
 
 # Familiarize (session start)
@@ -9,17 +9,17 @@ Run this **at the beginning of a new session** when the user invokes **`familiar
 
 ## Steps
 
-1. **Read** (repo root, in order):
-   - `AGENTS.md`
+1. **Read core files** (in order):
+   - `tasks/INDEX.md` — extract `CHANGELOG_DATE_ORDER` (the date format stated in the Changelogs section) and the `TASK_CHANGELOGS` folder name.
+   - **Agents guide** — scan the repo root for `AGENTS.md`, `CLAUDE.md`, and `AGENT.md`; read whichever exists. If none are found, note it and continue.
    - `ARCHITECTURE.md`
-   - `tasks/index.md`
 
-2. **Active changelog (root only)** — Consider only files matching **`tasks/changelogs/CHANGELOG_*.md`** that sit **directly in** `tasks/changelogs/` (**not** inside `jan`/`feb`/… subfolders).
-   - If **no such file exists**, **create** `tasks/changelogs/CHANGELOG_{DDMM}.md` for **today’s calendar date** (`dd`/`mm`, two digits each, e.g. 3 May → `CHANGELOG_0305.md`) using the **root active template** in `tasks/index.md`.
-   - If **one or more** exist, **read** the file for **today’s** `DDMM` if present; otherwise read the **most recently modified** root `CHANGELOG_*.md` (and note if it is not today’s date).
+2. **Active changelog** — The active changelog is the single `CHANGELOG_*.md` file at the **root** of `TASK_CHANGELOGS/` (not inside any `{mon}/` subfolder).
+   - If **no such file exists**, create one for today using the `CHANGELOG_DATE_ORDER` format from Step 1 (e.g. DDMM → `CHANGELOG_0305.md`; MMDD → `CHANGELOG_0503.md`; ISO → `CHANGELOG_2026-05-03.md`). Use the root active template from `tasks/INDEX.md`.
+   - If one exists, **read** it. Note if it is not today's date.
 
-3. **Last archived changelog** — Under `tasks/changelogs/{mon}/` (`jan` … `dec`, per `tasks/index.md`), find all `CHANGELOG_*.md` files and pick the **most recent** by `DDMM` in the filename (tie-break with month order if needed). **Read** that file. If **none** exist, skip and say so briefly.
+3. **Last archived changelog** — Under `TASK_CHANGELOGS/{mon}/` (`jan` … `dec`), find all `CHANGELOG_*.md` files. Pick the most recent by the date encoded in the filename, interpreting it using the `CHANGELOG_DATE_ORDER` format from Step 1. **Read** that file. If none exist, skip and say so briefly.
 
-4. **Summarize** for the user in a short reply: what you read, whether a **new root `CHANGELOG_{DDMM}.md`** was created in step 2, and which archived file (if any) was “last”.
+4. **Summarize** for the user: which files were read, whether a new root changelog was created in Step 2, and which archived file (if any) was read in Step 3.
 
-Do not skip step 1–3 unless a file is genuinely missing from the repo.
+Do not skip Steps 1–3 unless a file is genuinely missing from the repo.
